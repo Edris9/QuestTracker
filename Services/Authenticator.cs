@@ -4,18 +4,18 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using QuestTracker.Models;
+using QuestTracker.Data;
 
 namespace QuestTracker.Services
 {
     public class Authenticator
     {
         private static Authenticator _instance;
-        private List<User> users = new List<User>();
         private User currentUser = null;
         private string twoFACode = "";
         private Random random = new Random();
+        private QuestTrackerContext _context;
 
-        // Singleton pattern
         public static Authenticator Instance
         {
             get
@@ -26,39 +26,57 @@ namespace QuestTracker.Services
             }
         }
 
-        private Authenticator() { }
+        private Authenticator()
+        {
+            _context = new QuestTrackerContext();
+            _context.InitializeDatabase();
+        }
 
         // Registrera en ny hjälte
         public bool Register(string username, string password, string email, string phone)
         {
-            if (users.Any(u => u.Username == username))
+            try
+            {
+                if (_context.Users.Any(u => u.Username == username))
+                    return false;
+
+                User newUser = new User(username, email, phone);
+
+                if (!newUser.ValidatePasswordStrength(password))
+                    return false;
+
+                newUser.PasswordHash = HashPassword(password);
+
+                _context.Users.Add(newUser);
+                _context.SaveChanges();
+                return true;
+            }
+            catch
+            {
                 return false;
-
-            User newUser = new User(username, email, phone);
-
-            if (!newUser.ValidatePasswordStrength(password))
-                return false;
-
-            newUser.PasswordHash = HashPassword(password);
-            newUser.UserID = users.Count + 1;
-
-            users.Add(newUser);
-            return true;
+            }
         }
 
         // Logga in en hjälte
         public bool Login(string username, string password)
         {
-            User user = users.FirstOrDefault(u => u.Username == username);
+            try
+            {
+                User user = _context.Users.FirstOrDefault(u => u.Username == username);
 
-            if (user == null)
+                if (user == null)
+                    return false;
+
+                if (!VerifyPassword(password, user.PasswordHash))
+                    return false;
+
+                currentUser = user;
+                return true;
+            }
+            catch
+            {
                 return false;
-
-            if (!VerifyPassword(password, user.PasswordHash))
-                return false;
-
-            currentUser = user;
-            return true;
+            }
         }
 
         // Generera 2FA-kod
@@ -92,7 +110,7 @@ namespace QuestTracker.Services
             return currentUser;
         }
 
-        // Hash lösenord (med Salt)
+        // Hash lösenord
         private string HashPassword(string password)
         {
             using (var sha256 = SHA256.Create())
@@ -109,10 +127,10 @@ namespace QuestTracker.Services
             return hashOfInput == hash;
         }
 
-        // Hämta alla användare (för test/debug)
+        // Hämta alla användare
         public List<User> GetAllUsers()
         {
-            return users;
+            return _context.Users.ToList();
         }
     }
 }
