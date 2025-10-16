@@ -17,18 +17,15 @@ namespace QuestTracker
         {
             InitializeComponent();
 
-            // Hämta den inloggade användaren
             authenticator = Authenticator.Instance;
             questManager = new QuestManager();
+            currentUser = authenticator.GetCurrentUser();
 
-            // Ladda hjältens namn
-            LoadHeroName();
-        }
-
-        // Ladda hjältens namn
-        private void LoadHeroName()
-        {
-            HeroNameDisplay.Text = $"Hjälte: Placeholder"; // Vi uppdaterar detta senare
+            if (currentUser != null)
+            {
+                questManager.SetCurrentUser(currentUser.UserID);
+                HeroNameDisplay.Text = $"Hjälte: {currentUser.Username}";
+            }
         }
 
         // KNAPP: Lägg till Quest
