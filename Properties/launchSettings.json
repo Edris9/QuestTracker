@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "QuestTracker": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "TWILIO_ACCOUNT_SID": "US5445a67a64c78ebacd5e36f9254ef4be",
+        "TWILIO_AUTH_TOKEN": "eceb0e0619f2ffbf4ebdb848a7d92928",
+        "DIN_ANTHROPIC_API_KEY": "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"
+      }
+    }
+  }
+}

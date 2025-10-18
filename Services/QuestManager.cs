@@ -91,7 +91,7 @@ namespace QuestTracker.Services
         }
 
         // Slutför quest
-        public bool CompleteQuest(int questID)
+        public bool CompleteQuest(int questID, User currentUser = null)
         {
             try
             {
@@ -102,6 +102,14 @@ namespace QuestTracker.Services
 
                 quest.MarkAsCompleted();
                 _context.SaveChanges();
+
+                // Skicka SMS om vi har användare
+                if (currentUser != null && !string.IsNullOrWhiteSpace(currentUser.Phone))
+                {
+                    var notificationService = new NotificationService();
+                    notificationService.SendCompletionNotification(currentUser.Phone, currentUser.Username, quest.Title);
+                }
+
                 return true;
             }
             catch

@@ -85,10 +85,11 @@
                     Background="#444" 
                     Foreground="White" 
                     FontSize="12" 
-                    FontWeight="Bold"
+                    FontWeight="Bold"   
                     Click="Report_Click"
                     Cursor="Hand"
                     Margin="0,0,0,30"/>
+
 
             <Button x:Name="LogoutBtn" 
                     Content="👋 Logga Ut" 

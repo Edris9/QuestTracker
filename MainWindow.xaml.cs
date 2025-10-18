@@ -28,13 +28,11 @@ namespace QuestTracker
             }
         }
 
-        // KNAPP: Lägg till Quest
         private void AddQuest_Click(object sender, RoutedEventArgs e)
         {
             ContentTitle.Text = "➕ Lägg Till Nytt Uppdrag";
             ContentPanel.Children.Clear();
 
-            // Inputfält för Quest
             StackPanel panel = new StackPanel();
 
             TextBlock titleLabel = new TextBlock { Text = "Quest Titel:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
@@ -105,7 +103,6 @@ namespace QuestTracker
             ContentPanel.Children.Add(panel);
         }
 
-        // KNAPP: Visa Quests
         private void ViewQuests_Click(object sender, RoutedEventArgs e)
         {
             ContentTitle.Text = "👀 Dina Quests";
@@ -171,7 +168,6 @@ namespace QuestTracker
             }
         }
 
-        // KNAPP: Uppdatera Quest
         private void UpdateQuest_Click(object sender, RoutedEventArgs e)
         {
             ContentTitle.Text = "✏️ Uppdatera Quest";
@@ -187,23 +183,171 @@ namespace QuestTracker
             ContentPanel.Children.Add(infoMsg);
         }
 
-        // KNAPP: AI Advisor
-        private void AIAdvisor_Click(object sender, RoutedEventArgs e)
+        private async void AIAdvisor_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitle.Text = "🤖 Guild Advisor";
+            ContentTitle.Text = "🤖 Guild Advisor - Lokal AI (Ollama)";
             ContentPanel.Children.Clear();
 
-            TextBlock infoMsg = new TextBlock
+            StackPanel panel = new StackPanel();
+
+            bool ollamaRunning = await OllamaAdvisor.IsOllamaRunning();
+
+            if (!ollamaRunning)
             {
-                Text = "AI-hjälparen kommer snart! 🤖",
-                Foreground = System.Windows.Media.Brushes.Yellow,
-                FontSize = 14,
-                Margin = new Thickness(0, 20, 0, 0)
+                TextBlock warningText = new TextBlock
+                {
+                    Text = "⚠️ Ollama körs inte!\n\nStarta Ollama genom att öppna en terminal och skriva:\nollama serve",
+                    Foreground = System.Windows.Media.Brushes.Orange,
+                    FontSize = 13,
+                    Margin = new Thickness(0, 0, 0, 15),
+                    TextWrapping = TextWrapping.Wrap,
+                    FontWeight = FontWeights.Bold
+                };
+                panel.Children.Add(warningText);
+            }
+
+            TextBlock infoText = new TextBlock
+            {
+                Text = "Beskriv vad du behöver hjälp med, så ger AI:n dig förslag! (Använder Llama 3.1 8B lokalt)",
+                Foreground = System.Windows.Media.Brushes.LightCyan,
+                FontSize = 13,
+                Margin = new Thickness(0, 0, 0, 15),
+                TextWrapping = TextWrapping.Wrap
             };
-            ContentPanel.Children.Add(infoMsg);
+
+            TextBlock inputLabel = new TextBlock
+            {
+                Text = "Din fråga eller situation:",
+                Foreground = System.Windows.Media.Brushes.GreenYellow,
+                FontSize = 12,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+
+            TextBox aiInput = new TextBox
+            {
+                Height = 100,
+                Padding = new Thickness(10),
+                Background = System.Windows.Media.Brushes.DarkGray,
+                Foreground = System.Windows.Media.Brushes.White,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 15),
+                FontSize = 13
+            };
+
+            StackPanel buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 20) };
+
+            Button askAIBtn = new Button
+            {
+                Content = "💬 Fråga AI",
+                Width = 200,
+                Height = 40,
+                Background = System.Windows.Media.Brushes.GreenYellow,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+
+            Button analyzeBtn = new Button
+            {
+                Content = "📊 Analysera Mina Quests",
+                Width = 200,
+                Height = 40,
+                Background = System.Windows.Media.Brushes.Orange,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+
+            buttonPanel.Children.Add(askAIBtn);
+            buttonPanel.Children.Add(analyzeBtn);
+
+            TextBlock responseLabel = new TextBlock
+            {
+                Text = "AI-svar:",
+                Foreground = System.Windows.Media.Brushes.GreenYellow,
+                FontSize = 12,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+
+            TextBox aiResponse = new TextBox
+            {
+                Height = 200,
+                Padding = new Thickness(10),
+                Background = System.Windows.Media.Brushes.DarkSlateGray,
+                Foreground = System.Windows.Media.Brushes.White,
+                TextWrapping = TextWrapping.Wrap,
+                IsReadOnly = true,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                FontSize = 12,
+                Text = "Svaret visas här..."
+            };
+
+            askAIBtn.Click += async (s, ev) =>
+            {
+                if (string.IsNullOrWhiteSpace(aiInput.Text))
+                {
+                    MessageBox.Show("❌ Skriv in din fråga först!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                askAIBtn.IsEnabled = false;
+                askAIBtn.Content = "⏳ Väntar på AI...";
+                aiResponse.Text = "🤖 AI tänker...";
+
+                try
+                {
+                    string result = await OllamaAdvisor.GenerateQuestSuggestion(aiInput.Text);
+                    aiResponse.Text = result;
+                }
+                catch (Exception ex)
+                {
+                    aiResponse.Text = $"❌ Fel: {ex.Message}";
+                }
+                finally
+                {
+                    askAIBtn.IsEnabled = true;
+                    askAIBtn.Content = "💬 Fråga AI";
+                }
+            };
+
+            analyzeBtn.Click += async (s, ev) =>
+            {
+                analyzeBtn.IsEnabled = false;
+                analyzeBtn.Content = "⏳ Analyserar...";
+                aiResponse.Text = "🤖 Lokal AI analyserar dina quests...";
+
+                try
+                {
+                    var allQuests = questManager.GetAllQuests();
+                    int completed = questManager.GetCompletedQuests().Count;
+                    int pending = questManager.GetPendingQuests().Count;
+                    int nearDeadline = questManager.GetQuestsNearDeadline().Count;
+
+                    string result = await OllamaAdvisor.AnalyzeQuests(allQuests.Count, completed, pending, nearDeadline);
+                    aiResponse.Text = result;
+                }
+                catch (Exception ex)
+                {
+                    aiResponse.Text = $"❌ Fel: {ex.Message}";
+                }
+                finally
+                {
+                    analyzeBtn.IsEnabled = true;
+                    analyzeBtn.Content = "📊 Analysera Mina Quests";
+                }
+            };
+
+            panel.Children.Add(infoText);
+            panel.Children.Add(inputLabel);
+            panel.Children.Add(aiInput);
+            panel.Children.Add(buttonPanel);
+            panel.Children.Add(responseLabel);
+            panel.Children.Add(aiResponse);
+
+            ContentPanel.Children.Add(panel);
         }
 
-        // KNAPP: Guild Rapport
         private void Report_Click(object sender, RoutedEventArgs e)
         {
             ContentTitle.Text = "📊 Guild Rapport";
@@ -236,7 +380,6 @@ namespace QuestTracker
             ContentPanel.Children.Add(reportPanel);
         }
 
-        // KNAPP: Logga Ut
         private void Logout_Click(object sender, RoutedEventArgs e)
         {
             MessageBoxResult result = MessageBox.Show("Är du säker på att du vill logga ut?", "Logga ut", MessageBoxButton.YesNo, MessageBoxImage.Question);
