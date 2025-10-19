@@ -14,38 +14,26 @@ namespace QuestTracker.Services
 
         static OllamaAdvisor()
         {
-            // Sätt längre timeout för lokala modeller
             client.Timeout = TimeSpan.FromMinutes(2);
         }
 
-        // Generera quest-förslag med Ollama
-        public static async Task<string> GenerateQuestSuggestion(string userInput)
+        // 1. Generera quest description från titel
+        public static async Task<string> GenerateQuestDescription(string questTitle)
         {
             try
             {
-                string prompt = $@"Du är en Guild Advisor som hjälper hjältar att skapa och organisera quests.
+                string prompt = $@"Du är en Guild Advisor som skapar episka quest-beskrivningar.
 
-Användaren säger: {userInput}
+                    Quest-titel: {questTitle}
 
-Ge konkreta förslag på:
-1. En passande quest-titel
-2. En detaljerad beskrivning
-3. Rekommenderad prioritet (Hög/Medium/Låg)
-4. Förslag på deadline
-
-Svara kort och koncist på svenska.";
+                    Skapa en kort, episk beskrivning av detta uppdrag (max 3 meningar) på svenska.";
 
                 var requestBody = new
                 {
                     model = MODEL,
                     prompt = prompt,
                     stream = false,
-                    options = new
-                    {
-                        temperature = 0.7,
-                        top_p = 0.9,
-                        max_tokens = 500
-                    }
+                    options = new { temperature = 0.8, max_tokens = 200 }
                 };
 
                 string jsonBody = JsonSerializer.Serialize(requestBody);
@@ -55,66 +43,40 @@ Svara kort och koncist på svenska.";
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
-                {
-                    return $"❌ Ollama-fel: {response.StatusCode}\n{responseBody}";
-                }
+                    return "Fel vid generering av beskrivning.";
 
-                // Parsa JSON-svar från Ollama
                 using JsonDocument doc = JsonDocument.Parse(responseBody);
-                JsonElement root = doc.RootElement;
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement))
+                    return responseElement.GetString() ?? "";
 
-                if (root.TryGetProperty("response", out JsonElement responseElement))
-                {
-                    return responseElement.GetString() ?? "❌ Inget svar från Ollama";
-                }
-
-                return "❌ Kunde inte tolka Ollama-svar";
+                return "";
             }
-            catch (HttpRequestException ex)
+            catch
             {
-                return $"❌ Nätverksfel: {ex.Message}\n\nSe till att Ollama körs! Kör 'ollama serve' i terminalen.";
-            }
-            catch (TaskCanceledException)
-            {
-                return "❌ Timeout: Ollama tog för lång tid att svara. Försök igen.";
-            }
-            catch (Exception ex)
-            {
-                return $"❌ Fel: {ex.Message}";
+                return "Kunde inte generera beskrivning.";
             }
         }
 
-        // Analysera användarens quests med Ollama
-        public static async Task<string> AnalyzeQuests(int totalQuests, int completed, int pending, int nearDeadline)
+        // 2. Föreslå prioritet baserat på titel och deadline
+        public static async Task<string> SuggestPriority(string questTitle, DateTime dueDate)
         {
             try
             {
-                string prompt = $@"Du är en Guild Advisor som analyserar hjältars quest-prestationer.
+                int daysLeft = (dueDate - DateTime.Now).Days;
 
-Statistik:
-- Totalt quests: {totalQuests}
-- Slutförda: {completed}
-- Pågående: {pending}
-- Nära deadline: {nearDeadline}
+                string prompt = $@"Du är en Guild Advisor som bedömer quest-prioritet.
 
-Ge hjälten:
-1. En kort analys av deras prestationer
-2. Tips för att förbättra produktivitet
-3. Motiverande ord
+                    Quest: {questTitle}
+                    Dagar kvar: {daysLeft}
 
-Svara kort på svenska (max 5 meningar).";
+                    Svara ENDAST med ETT ord: Hög, Medium eller Låg";
 
                 var requestBody = new
                 {
                     model = MODEL,
                     prompt = prompt,
                     stream = false,
-                    options = new
-                    {
-                        temperature = 0.7,
-                        top_p = 0.9,
-                        max_tokens = 300
-                    }
+                    options = new { temperature = 0.3, max_tokens = 10 }
                 };
 
                 string jsonBody = JsonSerializer.Serialize(requestBody);
@@ -124,35 +86,150 @@ Svara kort på svenska (max 5 meningar).";
                 string responseBody = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
-                {
-                    return $"❌ Ollama-fel: {response.StatusCode}";
-                }
+                    return "Medium";
 
                 using JsonDocument doc = JsonDocument.Parse(responseBody);
-                JsonElement root = doc.RootElement;
-
-                if (root.TryGetProperty("response", out JsonElement responseElement))
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement))
                 {
-                    return responseElement.GetString() ?? "❌ Inget svar från Ollama";
+                    string result = responseElement.GetString()?.Trim() ?? "Medium";
+                    if (result.Contains("Hög") || result.Contains("hög")) return "Hög";
+                    if (result.Contains("Låg") || result.Contains("låg")) return "Låg";
+                    return "Medium";
                 }
 
-                return "❌ Kunde inte tolka Ollama-svar";
+                return "Medium";
             }
-            catch (HttpRequestException ex)
+            catch
             {
-                return $"❌ Nätverksfel: {ex.Message}\n\nSe till att Ollama körs! Kör 'ollama serve' i terminalen.";
+                return "Medium";
             }
-            catch (TaskCanceledException)
+        }
+
+        // 3. Sammanfatta alla quests - heroisk briefing
+        public static async Task<string> SummarizeQuests(int totalQuests, int completed, int pending, int nearDeadline)
+        {
+            try
             {
-                return "❌ Timeout: Ollama tog för lång tid att svara. Försök igen.";
+                string prompt = $@"Du är en Guild Advisor som ger heroiska briefings.
+
+                    Statistik:
+                    - Totalt quests: {totalQuests}
+                    - Slutförda: {completed}
+                    - Pågående: {pending}
+                    - Nära deadline: {nearDeadline}
+
+                    Ge en kort heroisk briefing (max 4 meningar) på svenska om hjältens situation.";
+
+                var requestBody = new
+                {
+                    model = MODEL,
+                    prompt = prompt,
+                    stream = false,
+                    options = new { temperature = 0.7, max_tokens = 300 }
+                };
+
+                string jsonBody = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(OLLAMA_URL, content);
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return "Kunde inte generera briefing.";
+
+                using JsonDocument doc = JsonDocument.Parse(responseBody);
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement))
+                    return responseElement.GetString() ?? "";
+
+                return "";
             }
-            catch (Exception ex)
+            catch
             {
-                return $"❌ Fel: {ex.Message}";
+                return "Kunde inte generera briefing.";
             }
         }
 
         // Kontrollera om Ollama körs
+        public static async Task<string> GenerateQuestSuggestion(string userInput)
+        {
+            try
+            {
+                string prompt = $@"Du är en Guild Advisor som hjälper hjältar att skapa quests.
+
+                    Användaren säger: {userInput}
+
+                    Ge förslag på quest-titel, beskrivning och prioritet på svenska.";
+
+                var requestBody = new
+                {
+                    model = MODEL,
+                    prompt = prompt,
+                    stream = false,
+                    options = new { temperature = 0.7, max_tokens = 500 }
+                };
+
+                string jsonBody = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(OLLAMA_URL, content);
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return "❌ Ollama-fel";
+
+                using JsonDocument doc = JsonDocument.Parse(responseBody);
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement))
+                    return responseElement.GetString() ?? "❌ Inget svar";
+
+                return "❌ Kunde inte tolka svar";
+            }
+            catch
+            {
+                return "❌ Fel: Se till att Ollama körs (ollama serve)";
+            }
+        }
+
+        public static async Task<string> AnalyzeQuests(int totalQuests, int completed, int pending, int nearDeadline)
+        {
+            try
+            {
+                string prompt = $@"Du är Guild Advisor. Analysera:
+                - Totalt: {totalQuests}
+                - Klara: {completed}
+                - Pågående: {pending}
+                - Nära deadline: {nearDeadline}
+
+                Ge kort heroisk briefing på svenska (max 4 meningar).";
+
+                var requestBody = new
+                {
+                    model = MODEL,
+                    prompt = prompt,
+                    stream = false,
+                    options = new { temperature = 0.7, max_tokens = 300 }
+                };
+
+                string jsonBody = JsonSerializer.Serialize(requestBody);
+                var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(OLLAMA_URL, content);
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                    return "❌ Ollama-fel";
+
+                using JsonDocument doc = JsonDocument.Parse(responseBody);
+                if (doc.RootElement.TryGetProperty("response", out JsonElement responseElement))
+                    return responseElement.GetString() ?? "❌ Inget svar";
+
+                return "❌ Kunde inte tolka svar";
+            }
+            catch
+            {
+                return "❌ Fel: Se till att Ollama körs";
+            }
+        }
+
         public static async Task<bool> IsOllamaRunning()
         {
             try
@@ -163,38 +240,6 @@ Svara kort på svenska (max 5 meningar).";
             catch
             {
                 return false;
-            }
-        }
-
-        // Hämta lista över tillgängliga modeller
-        public static async Task<string[]> GetAvailableModels()
-        {
-            try
-            {
-                HttpResponseMessage response = await client.GetAsync("http://localhost:11434/api/tags");
-                string responseBody = await response.Content.ReadAsStringAsync();
-
-                using JsonDocument doc = JsonDocument.Parse(responseBody);
-                JsonElement root = doc.RootElement;
-
-                if (root.TryGetProperty("models", out JsonElement modelsArray))
-                {
-                    var models = new System.Collections.Generic.List<string>();
-                    foreach (JsonElement model in modelsArray.EnumerateArray())
-                    {
-                        if (model.TryGetProperty("name", out JsonElement nameElement))
-                        {
-                            models.Add(nameElement.GetString() ?? "");
-                        }
-                    }
-                    return models.ToArray();
-                }
-
-                return new string[0];
-            }
-            catch
-            {
-                return new string[0];
             }
         }
     }

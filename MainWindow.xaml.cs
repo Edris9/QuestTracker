@@ -41,15 +41,94 @@ namespace QuestTracker
             TextBlock descLabel = new TextBlock { Text = "Beskrivning:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
             TextBox descInput = new TextBox { Height = 80, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 15) };
 
-            TextBlock priorityLabel = new TextBlock { Text = "Prioritet (Hög/Medium/Låg):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            Button aiDescBtn = new Button
+            {
+                Content = "🤖 AI: Skapa Beskrivning",
+                Height = 35,
+                Background = System.Windows.Media.Brushes.Orange,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(0, 0, 0, 15)
+            };
+
+            aiDescBtn.Click += async (s, ev) =>
+            {
+                if (string.IsNullOrWhiteSpace(titleInput.Text))
+                {
+                    MessageBox.Show("❌ Fyll i titel först!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                aiDescBtn.IsEnabled = false;
+                aiDescBtn.Content = "⏳ Genererar...";
+
+                string description = await OllamaAdvisor.GenerateQuestDescription(titleInput.Text);
+                descInput.Text = description;
+
+                aiDescBtn.IsEnabled = true;
+                aiDescBtn.Content = "🤖 AI: Skapa Beskrivning";
+            };
+
+            TextBlock priorityLabel = new TextBlock { Text = "Prioritet:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
             ComboBox priorityInput = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
             priorityInput.Items.Add("Hög");
             priorityInput.Items.Add("Medium");
             priorityInput.Items.Add("Låg");
-            priorityInput.SelectedIndex = 0;
+            priorityInput.SelectedIndex = 1;
 
-            TextBlock dateLabel = new TextBlock { Text = "Deadline (YYYY-MM-DD):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock dateLabel = new TextBlock { Text = "Deadline Datum (YYYY-MM-DD):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
             TextBox dateInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+
+            TextBlock timeLabel = new TextBlock { Text = "Deadline Tid (HH:MM):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBox timeInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15), Text = "23:59" };
+
+            Button aiPriorityBtn = new Button
+            {
+                Content = "🤖 AI: Föreslå Prioritet",
+                Height = 35,
+                Background = System.Windows.Media.Brushes.Orange,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(0, 0, 0, 15)
+            };
+
+            aiPriorityBtn.Click += async (s, ev) =>
+            {
+                if (string.IsNullOrWhiteSpace(titleInput.Text) || string.IsNullOrWhiteSpace(dateInput.Text))
+                {
+                    MessageBox.Show("❌ Fyll i titel och deadline först!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                try
+                {
+                    DateTime dueDate = DateTime.Parse($"{dateInput.Text} {timeInput.Text}");
+                    aiPriorityBtn.IsEnabled = false;
+                    aiPriorityBtn.Content = "⏳ Analyserar...";
+
+                    string priority = await OllamaAdvisor.SuggestPriority(titleInput.Text, dueDate);
+
+                    for (int i = 0; i < priorityInput.Items.Count; i++)
+                    {
+                        if (priorityInput.Items[i].ToString() == priority)
+                        {
+                            priorityInput.SelectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    aiPriorityBtn.IsEnabled = true;
+                    aiPriorityBtn.Content = "🤖 AI: Föreslå Prioritet";
+                }
+                catch
+                {
+                    MessageBox.Show("❌ Ogiltigt datum/tid format!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    aiPriorityBtn.IsEnabled = true;
+                    aiPriorityBtn.Content = "🤖 AI: Föreslå Prioritet";
+                }
+            };
 
             Button createBtn = new Button
             {
@@ -71,12 +150,14 @@ namespace QuestTracker
 
                 try
                 {
+                    DateTime dueDate = DateTime.Parse($"{dateInput.Text} {timeInput.Text}");
+
                     Quest newQuest = new Quest
                     {
                         Title = titleInput.Text,
                         Description = descInput.Text,
                         Priority = priorityInput.SelectedItem.ToString(),
-                        DueDate = DateTime.Parse(dateInput.Text),
+                        DueDate = dueDate,
                         IsCompleted = false
                     };
 
@@ -94,10 +175,14 @@ namespace QuestTracker
             panel.Children.Add(titleInput);
             panel.Children.Add(descLabel);
             panel.Children.Add(descInput);
+            panel.Children.Add(aiDescBtn);
             panel.Children.Add(priorityLabel);
             panel.Children.Add(priorityInput);
             panel.Children.Add(dateLabel);
             panel.Children.Add(dateInput);
+            panel.Children.Add(timeLabel);
+            panel.Children.Add(timeInput);
+            panel.Children.Add(aiPriorityBtn);
             panel.Children.Add(createBtn);
 
             ContentPanel.Children.Add(panel);
@@ -125,9 +210,13 @@ namespace QuestTracker
 
             foreach (var quest in quests)
             {
+                var borderBrush = quest.IsNearDeadline()
+                    ? System.Windows.Media.Brushes.Red
+                    : System.Windows.Media.Brushes.GreenYellow;
+
                 Border border = new Border
                 {
-                    BorderBrush = System.Windows.Media.Brushes.GreenYellow,
+                    BorderBrush = borderBrush,
                     BorderThickness = new Thickness(2),
                     CornerRadius = new CornerRadius(5),
                     Background = System.Windows.Media.Brushes.DarkGray,
@@ -152,10 +241,13 @@ namespace QuestTracker
                     Margin = new Thickness(0, 5, 0, 5)
                 };
 
+                double hoursLeft = quest.GetHoursRemaining();
+                string timeWarning = quest.IsNearDeadline() ? "🔴 NÄRA DEADLINE! " : "";
+
                 TextBlock questStatus = new TextBlock
                 {
-                    Text = $"Status: {(quest.IsCompleted ? "✅ KLART" : "⏳ PÅGÅR")} | Prioritet: {quest.Priority} | Deadline: {quest.DueDate:yyyy-MM-dd}",
-                    Foreground = System.Windows.Media.Brushes.Yellow,
+                    Text = $"{timeWarning}Status: {(quest.IsCompleted ? "✅ KLART" : "⏳ PÅGÅR")} | Prioritet: {quest.Priority} | Deadline: {quest.DueDate:yyyy-MM-dd HH:mm} | {hoursLeft:F1}h kvar",
+                    Foreground = quest.IsNearDeadline() ? System.Windows.Media.Brushes.Red : System.Windows.Media.Brushes.Yellow,
                     FontSize = 12
                 };
 
@@ -185,7 +277,7 @@ namespace QuestTracker
 
         private async void AIAdvisor_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitle.Text = "🤖 Guild Advisor - Lokal AI (Ollama)";
+            ContentTitle.Text = "🤖 Guild Advisor - Heroisk Briefing";
             ContentPanel.Children.Clear();
 
             StackPanel panel = new StackPanel();
@@ -196,7 +288,7 @@ namespace QuestTracker
             {
                 TextBlock warningText = new TextBlock
                 {
-                    Text = "⚠️ Ollama körs inte!\n\nStarta Ollama genom att öppna en terminal och skriva:\nollama serve",
+                    Text = "⚠️ Ollama körs inte! Starta: ollama serve",
                     Foreground = System.Windows.Media.Brushes.Orange,
                     FontSize = 13,
                     Margin = new Thickness(0, 0, 0, 15),
@@ -206,116 +298,36 @@ namespace QuestTracker
                 panel.Children.Add(warningText);
             }
 
-            TextBlock infoText = new TextBlock
+            Button briefingBtn = new Button
             {
-                Text = "Beskriv vad du behöver hjälp med, så ger AI:n dig förslag! (Använder Llama 3.1 8B lokalt)",
-                Foreground = System.Windows.Media.Brushes.LightCyan,
-                FontSize = 13,
-                Margin = new Thickness(0, 0, 0, 15),
-                TextWrapping = TextWrapping.Wrap
-            };
-
-            TextBlock inputLabel = new TextBlock
-            {
-                Text = "Din fråga eller situation:",
-                Foreground = System.Windows.Media.Brushes.GreenYellow,
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
-
-            TextBox aiInput = new TextBox
-            {
-                Height = 100,
-                Padding = new Thickness(10),
-                Background = System.Windows.Media.Brushes.DarkGray,
-                Foreground = System.Windows.Media.Brushes.White,
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 15),
-                FontSize = 13
-            };
-
-            StackPanel buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 20) };
-
-            Button askAIBtn = new Button
-            {
-                Content = "💬 Fråga AI",
-                Width = 200,
-                Height = 40,
+                Content = "📜 FÅ HEROISK BRIEFING",
+                Height = 50,
                 Background = System.Windows.Media.Brushes.GreenYellow,
                 Foreground = System.Windows.Media.Brushes.Black,
                 FontWeight = FontWeights.Bold,
+                FontSize = 14,
                 Cursor = System.Windows.Input.Cursors.Hand,
-                Margin = new Thickness(0, 0, 10, 0)
+                Margin = new Thickness(0, 20, 0, 20)
             };
 
-            Button analyzeBtn = new Button
+            TextBox briefingResponse = new TextBox
             {
-                Content = "📊 Analysera Mina Quests",
-                Width = 200,
-                Height = 40,
-                Background = System.Windows.Media.Brushes.Orange,
-                Foreground = System.Windows.Media.Brushes.Black,
-                FontWeight = FontWeights.Bold,
-                Cursor = System.Windows.Input.Cursors.Hand
-            };
-
-            buttonPanel.Children.Add(askAIBtn);
-            buttonPanel.Children.Add(analyzeBtn);
-
-            TextBlock responseLabel = new TextBlock
-            {
-                Text = "AI-svar:",
-                Foreground = System.Windows.Media.Brushes.GreenYellow,
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 0, 5)
-            };
-
-            TextBox aiResponse = new TextBox
-            {
-                Height = 200,
-                Padding = new Thickness(10),
+                Height = 300,
+                Padding = new Thickness(15),
                 Background = System.Windows.Media.Brushes.DarkSlateGray,
                 Foreground = System.Windows.Media.Brushes.White,
                 TextWrapping = TextWrapping.Wrap,
                 IsReadOnly = true,
                 VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                FontSize = 12,
-                Text = "Svaret visas här..."
+                FontSize = 13,
+                Text = "Klicka på knappen för att få din heroiska briefing..."
             };
 
-            askAIBtn.Click += async (s, ev) =>
+            briefingBtn.Click += async (s, ev) =>
             {
-                if (string.IsNullOrWhiteSpace(aiInput.Text))
-                {
-                    MessageBox.Show("❌ Skriv in din fråga först!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                askAIBtn.IsEnabled = false;
-                askAIBtn.Content = "⏳ Väntar på AI...";
-                aiResponse.Text = "🤖 AI tänker...";
-
-                try
-                {
-                    string result = await OllamaAdvisor.GenerateQuestSuggestion(aiInput.Text);
-                    aiResponse.Text = result;
-                }
-                catch (Exception ex)
-                {
-                    aiResponse.Text = $"❌ Fel: {ex.Message}";
-                }
-                finally
-                {
-                    askAIBtn.IsEnabled = true;
-                    askAIBtn.Content = "💬 Fråga AI";
-                }
-            };
-
-            analyzeBtn.Click += async (s, ev) =>
-            {
-                analyzeBtn.IsEnabled = false;
-                analyzeBtn.Content = "⏳ Analyserar...";
-                aiResponse.Text = "🤖 Lokal AI analyserar dina quests...";
+                briefingBtn.IsEnabled = false;
+                briefingBtn.Content = "⏳ Skapar briefing...";
+                briefingResponse.Text = "🤖 Guild Advisor förbereder din briefing...";
 
                 try
                 {
@@ -324,26 +336,22 @@ namespace QuestTracker
                     int pending = questManager.GetPendingQuests().Count;
                     int nearDeadline = questManager.GetQuestsNearDeadline().Count;
 
-                    string result = await OllamaAdvisor.AnalyzeQuests(allQuests.Count, completed, pending, nearDeadline);
-                    aiResponse.Text = result;
+                    string result = await OllamaAdvisor.SummarizeQuests(allQuests.Count, completed, pending, nearDeadline);
+                    briefingResponse.Text = $"📜 HEROISK BRIEFING\n\n{result}";
                 }
                 catch (Exception ex)
                 {
-                    aiResponse.Text = $"❌ Fel: {ex.Message}";
+                    briefingResponse.Text = $"❌ Fel: {ex.Message}";
                 }
                 finally
                 {
-                    analyzeBtn.IsEnabled = true;
-                    analyzeBtn.Content = "📊 Analysera Mina Quests";
+                    briefingBtn.IsEnabled = true;
+                    briefingBtn.Content = "📜 FÅ HEROISK BRIEFING";
                 }
             };
 
-            panel.Children.Add(infoText);
-            panel.Children.Add(inputLabel);
-            panel.Children.Add(aiInput);
-            panel.Children.Add(buttonPanel);
-            panel.Children.Add(responseLabel);
-            panel.Children.Add(aiResponse);
+            panel.Children.Add(briefingBtn);
+            panel.Children.Add(briefingResponse);
 
             ContentPanel.Children.Add(panel);
         }

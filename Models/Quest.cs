@@ -9,12 +9,11 @@ namespace QuestTracker.Models
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime DueDate { get; set; }
-        public string Priority { get; set; } // "Hög", "Medium", "Låg"
+        public string Priority { get; set; }
         public bool IsCompleted { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? CompletedDate { get; set; }
 
-        // Constructor
         public Quest()
         {
             CreatedDate = DateTime.Now;
@@ -32,14 +31,12 @@ namespace QuestTracker.Models
             IsCompleted = false;
         }
 
-        // Markera quest som klart
         public void MarkAsCompleted()
         {
             IsCompleted = true;
             CompletedDate = DateTime.Now;
         }
 
-        // Uppdatera quest
         public void UpdateQuest(string title, string description, DateTime dueDate, string priority)
         {
             Title = title;
@@ -48,17 +45,24 @@ namespace QuestTracker.Models
             Priority = priority;
         }
 
-        // Kontrollera om quest är nära deadline (mindre än 24 timmar)
         public bool IsNearDeadline()
         {
             if (IsCompleted)
                 return false;
 
             TimeSpan timeLeft = DueDate - DateTime.Now;
-            return timeLeft.TotalHours < 24 && timeLeft.TotalHours > 0;
+            return timeLeft.TotalHours <= 24 && timeLeft.TotalHours > 0;
         }
 
-        // Få dagar kvar
+        public double GetHoursRemaining()
+        {
+            if (IsCompleted)
+                return 0;
+
+            TimeSpan timeLeft = DueDate - DateTime.Now;
+            return timeLeft.TotalHours;
+        }
+
         public int GetDaysRemaining()
         {
             if (IsCompleted)
@@ -68,7 +72,6 @@ namespace QuestTracker.Models
             return (int)timeLeft.TotalDays;
         }
 
-        // Få prioritet som siffra (för sortering)
         public int GetPriorityValue()
         {
             switch (Priority.ToLower())
@@ -86,7 +89,7 @@ namespace QuestTracker.Models
 
         public override string ToString()
         {
-            return $"[{(IsCompleted ? "✅" : "⏳")}] {Title} - Prioritet: {Priority} - Deadline: {DueDate:yyyy-MM-dd}";
+            return $"[{(IsCompleted ? "✅" : "⏳")}] {Title} - Prioritet: {Priority} - Deadline: {DueDate:yyyy-MM-dd HH:mm}";
         }
     }
 }
