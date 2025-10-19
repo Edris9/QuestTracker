@@ -51,7 +51,7 @@ namespace QuestTracker.Models
                 return false;
 
             TimeSpan timeLeft = DueDate - DateTime.Now;
-            return timeLeft.TotalHours <= 24 && timeLeft.TotalHours > 0;
+            return timeLeft.TotalHours <= 24 && timeLeft.TotalHours >= 0;
         }
 
         public double GetHoursRemaining()
