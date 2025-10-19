@@ -124,5 +124,10 @@ namespace QuestTracker.Views
                 RegisterErrorMessage.Text = "❌ Registrering misslyckades!";
             }
         }
+
+        private void LoginUsername_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+
+        }
     }
 }

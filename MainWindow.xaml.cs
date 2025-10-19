@@ -282,8 +282,9 @@ namespace QuestTracker
 
             StackPanel panel = new StackPanel();
 
-            TextBlock selectLabel = new TextBlock { Text = "Välj quest att uppdatera:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
-            ComboBox questSelector = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+            TextBlock selectLabel = new TextBlock { Text = "Välj quest att uppdatera:", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
+
+            ComboBox questSelector = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.Black, Margin = new Thickness(0, 0, 0, 15) };
 
             foreach (var quest in quests)
             {
@@ -291,23 +292,27 @@ namespace QuestTracker
             }
             questSelector.SelectedIndex = 0;
 
-            TextBlock titleLabel = new TextBlock { Text = "Ny Titel:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock titleLabel = new TextBlock { Text = "Ny Titel:", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
+
             TextBox titleInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
 
-            TextBlock descLabel = new TextBlock { Text = "Ny Beskrivning:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock descLabel = new TextBlock { Text = "Ny Beskrivning:", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
+
             TextBox descInput = new TextBox { Height = 80, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 15) };
 
-            TextBlock priorityLabel = new TextBlock { Text = "Ny Prioritet:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock priorityLabel = new TextBlock { Text = "Ny Prioritet:", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
+
             ComboBox priorityInput = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
             priorityInput.Items.Add("Hög");
             priorityInput.Items.Add("Medium");
             priorityInput.Items.Add("Låg");
             priorityInput.SelectedIndex = 1;
 
-            TextBlock dateLabel = new TextBlock { Text = "Ny Deadline Datum (YYYY-MM-DD):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock dateLabel = new TextBlock { Text = "Ny Deadline Datum (YYYY-MM-DD):", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
+
             TextBox dateInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
 
-            TextBlock timeLabel = new TextBlock { Text = "Ny Deadline Tid (HH:MM):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBlock timeLabel = new TextBlock { Text = "Ny Deadline Tid (HH:MM):", Foreground = System.Windows.Media.Brushes.White, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 5) };
             TextBox timeInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15), Text = "23:59" };
 
             questSelector.SelectionChanged += (s, ev) =>

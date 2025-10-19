@@ -73,7 +73,7 @@
                          BorderBrush="#00ff88"
                          BorderThickness="2"
                          Margin="0,0,0,15"
-                         FontSize="14"/>
+                         FontSize="14" TextChanged="LoginUsername_TextChanged"/>
 
                 <!-- Lösenord -->
                 <TextBlock Text="Lösenord:" Foreground="#00ff88" FontSize="12" Margin="0,0,0,5"/>
