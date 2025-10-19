@@ -169,7 +169,17 @@ namespace QuestTracker.Services
         {
             try
             {
-                return _context.Quests.Where(q => q.UserID == _currentUserID && q.IsNearDeadline()).ToList();
+                var nearDeadline = new List<Quest>();
+
+                foreach (var quest in _context.Quests.Where(q => q.UserID == _currentUserID && !q.IsCompleted))
+                {
+                    if (quest.IsNearDeadline())
+                    {
+                        nearDeadline.Add(quest);
+                    }
+                }
+
+                return nearDeadline;
             }
             catch
             {

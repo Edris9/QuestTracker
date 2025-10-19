@@ -265,14 +265,184 @@ namespace QuestTracker
             ContentTitle.Text = "✏️ Uppdatera Quest";
             ContentPanel.Children.Clear();
 
-            TextBlock infoMsg = new TextBlock
+            var quests = questManager.GetPendingQuests();
+
+            if (quests.Count == 0)
             {
-                Text = "Denna funktion kommer snart! 🔜",
-                Foreground = System.Windows.Media.Brushes.Yellow,
-                FontSize = 14,
-                Margin = new Thickness(0, 20, 0, 0)
+                TextBlock noQuestMsg = new TextBlock
+                {
+                    Text = "Du har inga pågående quests att uppdatera!",
+                    Foreground = System.Windows.Media.Brushes.Yellow,
+                    FontSize = 14,
+                    Margin = new Thickness(0, 20, 0, 0)
+                };
+                ContentPanel.Children.Add(noQuestMsg);
+                return;
+            }
+
+            StackPanel panel = new StackPanel();
+
+            TextBlock selectLabel = new TextBlock { Text = "Välj quest att uppdatera:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            ComboBox questSelector = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+
+            foreach (var quest in quests)
+            {
+                questSelector.Items.Add($"{quest.QuestID} - {quest.Title}");
+            }
+            questSelector.SelectedIndex = 0;
+
+            TextBlock titleLabel = new TextBlock { Text = "Ny Titel:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBox titleInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+
+            TextBlock descLabel = new TextBlock { Text = "Ny Beskrivning:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBox descInput = new TextBox { Height = 80, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 15) };
+
+            TextBlock priorityLabel = new TextBlock { Text = "Ny Prioritet:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            ComboBox priorityInput = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+            priorityInput.Items.Add("Hög");
+            priorityInput.Items.Add("Medium");
+            priorityInput.Items.Add("Låg");
+            priorityInput.SelectedIndex = 1;
+
+            TextBlock dateLabel = new TextBlock { Text = "Ny Deadline Datum (YYYY-MM-DD):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBox dateInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+
+            TextBlock timeLabel = new TextBlock { Text = "Ny Deadline Tid (HH:MM):", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
+            TextBox timeInput = new TextBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15), Text = "23:59" };
+
+            questSelector.SelectionChanged += (s, ev) =>
+            {
+                if (questSelector.SelectedIndex >= 0)
+                {
+                    var selectedQuest = quests[questSelector.SelectedIndex];
+                    titleInput.Text = selectedQuest.Title;
+                    descInput.Text = selectedQuest.Description;
+                    dateInput.Text = selectedQuest.DueDate.ToString("yyyy-MM-dd");
+                    timeInput.Text = selectedQuest.DueDate.ToString("HH:mm");
+
+                    for (int i = 0; i < priorityInput.Items.Count; i++)
+                    {
+                        if (priorityInput.Items[i].ToString() == selectedQuest.Priority)
+                        {
+                            priorityInput.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
             };
-            ContentPanel.Children.Add(infoMsg);
+
+            if (quests.Count > 0)
+            {
+                var firstQuest = quests[0];
+                titleInput.Text = firstQuest.Title;
+                descInput.Text = firstQuest.Description;
+                dateInput.Text = firstQuest.DueDate.ToString("yyyy-MM-dd");
+                timeInput.Text = firstQuest.DueDate.ToString("HH:mm");
+
+                for (int i = 0; i < priorityInput.Items.Count; i++)
+                {
+                    if (priorityInput.Items[i].ToString() == firstQuest.Priority)
+                    {
+                        priorityInput.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            StackPanel buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 20, 0, 0) };
+
+            Button updateBtn = new Button
+            {
+                Content = "✏️ UPPDATERA",
+                Width = 150,
+                Height = 40,
+                Background = System.Windows.Media.Brushes.GreenYellow,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+
+            Button completeBtn = new Button
+            {
+                Content = "✅ SLUTFÖR",
+                Width = 150,
+                Height = 40,
+                Background = System.Windows.Media.Brushes.LightGreen,
+                Foreground = System.Windows.Media.Brushes.Black,
+                FontWeight = FontWeights.Bold,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+
+            updateBtn.Click += (s, ev) =>
+            {
+                if (questSelector.SelectedIndex < 0)
+                {
+                    MessageBox.Show("❌ Välj en quest!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                try
+                {
+                    var selectedQuest = quests[questSelector.SelectedIndex];
+                    DateTime newDueDate = DateTime.Parse($"{dateInput.Text} {timeInput.Text}");
+
+                    Quest updatedQuest = new Quest
+                    {
+                        Title = titleInput.Text,
+                        Description = descInput.Text,
+                        Priority = priorityInput.SelectedItem.ToString(),
+                        DueDate = newDueDate
+                    };
+
+                    questManager.UpdateQuest(selectedQuest.QuestID, updatedQuest);
+                    MessageBox.Show("✅ Quest uppdaterad!", "Framgång", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewQuests_Click(null, null);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"❌ Fel: {ex.Message}", "Fel", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
+
+            completeBtn.Click += (s, ev) =>
+            {
+                if (questSelector.SelectedIndex < 0)
+                {
+                    MessageBox.Show("❌ Välj en quest!", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var selectedQuest = quests[questSelector.SelectedIndex];
+
+                MessageBoxResult result = MessageBox.Show($"Slutföra quest: {selectedQuest.Title}?", "Bekräfta", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    questManager.CompleteQuest(selectedQuest.QuestID);
+                    MessageBox.Show("✅ Quest slutförd!", "Framgång", MessageBoxButton.OK, MessageBoxImage.Information);
+                    ViewQuests_Click(null, null);
+                }
+            };
+
+            buttonPanel.Children.Add(updateBtn);
+            buttonPanel.Children.Add(completeBtn);
+
+            panel.Children.Add(selectLabel);
+            panel.Children.Add(questSelector);
+            panel.Children.Add(titleLabel);
+            panel.Children.Add(titleInput);
+            panel.Children.Add(descLabel);
+            panel.Children.Add(descInput);
+            panel.Children.Add(priorityLabel);
+            panel.Children.Add(priorityInput);
+            panel.Children.Add(dateLabel);
+            panel.Children.Add(dateInput);
+            panel.Children.Add(timeLabel);
+            panel.Children.Add(timeInput);
+            panel.Children.Add(buttonPanel);
+
+            ContentPanel.Children.Add(panel);
         }
 
         private async void AIAdvisor_Click(object sender, RoutedEventArgs e)
