@@ -48,8 +48,20 @@ namespace QuestTracker.Views
                 // Generera 2FA-kod
                 string code = authenticator.GenerateTwoFACode();
 
-                // Visa koden i en popup
-                MessageBox.Show($"Din 2FA-kod är:\n\n{code}", "🔐 2FA-kod", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Skicka SMS med koden istället för popup
+                var notificationService = new QuestTracker.Services.NotificationService();
+                var user = authenticator.GetCurrentUser();
+
+                bool smsSent = notificationService.SendSMS(user.Phone, $"Din 2FA-kod är: {code}");
+
+                if (smsSent)
+                {
+                    MessageBox.Show("SMS skickad med din 2FA-kod!", "Kod skickad", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show($"SMS kunde inte skickas. Kod: {code}", "SMS Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
 
                 // Öppna 2FA-fönstret
                 twoFAWindow = new TwoFAWindow(authenticator);
