@@ -149,7 +149,7 @@ namespace QuestTracker
             };
 
             TextBlock priorityLabel = new TextBlock { Text = "Prioritet:", Foreground = System.Windows.Media.Brushes.GreenYellow, Margin = new Thickness(0, 0, 0, 5) };
-            ComboBox priorityInput = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 15) };
+            ComboBox priorityInput = new ComboBox { Height = 35, Padding = new Thickness(10), Background = System.Windows.Media.Brushes.DarkGray, Foreground = System.Windows.Media.Brushes.Black, Margin = new Thickness(0, 0, 0, 15) };
             priorityInput.Items.Add("Hög");
             priorityInput.Items.Add("Medium");
             priorityInput.Items.Add("Låg");
