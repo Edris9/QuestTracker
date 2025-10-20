@@ -32,8 +32,80 @@ namespace QuestTracker
                 //NotificationService notificationService = new NotificationService();
                 //notificationService.CheckAndNotifyDeadlines(currentUser, questManager);
             }
-        }   
+        }
 
+        private void Achievements_Click(object sender, RoutedEventArgs e)
+        {
+            ContentTitle.Text = "🏆 Achievements";
+            ContentPanel.Children.Clear();
+
+            var achievements = achievementManager.GetUnlockedAchievements();
+            string rank = achievementManager.GetCurrentRank();
+
+            StackPanel panel = new StackPanel();
+
+            TextBlock rankDisplay = new TextBlock
+            {
+                Text = $"Din Rank: {rank}",
+                Foreground = System.Windows.Media.Brushes.Gold,
+                FontSize = 20,
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+            panel.Children.Add(rankDisplay);
+
+            if (achievements.Count == 0)
+            {
+                TextBlock noAchievements = new TextBlock
+                {
+                    Text = "Du har inga achievements ännu! Slutför quests för att låsa upp badges.",
+                    Foreground = System.Windows.Media.Brushes.Yellow,
+                    FontSize = 14
+                };
+                panel.Children.Add(noAchievements);
+            }
+            else
+            {
+                foreach (var achievement in achievements)
+                {
+                    Border border = new Border
+                    {
+                        BorderBrush = System.Windows.Media.Brushes.Gold,
+                        BorderThickness = new Thickness(2),
+                        CornerRadius = new CornerRadius(5),
+                        Background = System.Windows.Media.Brushes.DarkSlateGray,
+                        Padding = new Thickness(15),
+                        Margin = new Thickness(0, 0, 0, 15)
+                    };
+
+                    StackPanel achievementPanel = new StackPanel();
+
+                    TextBlock title = new TextBlock
+                    {
+                        Text = achievement.Title,
+                        Foreground = System.Windows.Media.Brushes.Gold,
+                        FontSize = 16,
+                        FontWeight = FontWeights.Bold
+                    };
+
+                    TextBlock description = new TextBlock
+                    {
+                        Text = achievement.Description,
+                        Foreground = System.Windows.Media.Brushes.LightGray,
+                        FontSize = 12,
+                        Margin = new Thickness(0, 5, 0, 0)
+                    };
+
+                    achievementPanel.Children.Add(title);
+                    achievementPanel.Children.Add(description);
+
+                    border.Child = achievementPanel;
+                    panel.Children.Add(border);
+                }
+            }
+
+            ContentPanel.Children.Add(panel);
+        }
         private void AddQuest_Click(object sender, RoutedEventArgs e)
         {
             ContentTitle.Text = "➕ Lägg Till Nytt Uppdrag";
