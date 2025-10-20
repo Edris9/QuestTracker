@@ -15,6 +15,7 @@ namespace QuestTracker.Views
             authenticator = Authenticator.Instance;
         }
 
+
         // Byta till Login-fliken
         private void LoginTab_Click(object sender, RoutedEventArgs e)
         {

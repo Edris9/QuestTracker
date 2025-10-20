@@ -68,6 +68,17 @@
                     Cursor="Hand"
                     Margin="0,0,0,10"/>
 
+            <Button x:Name="AchievementsBtn" 
+                    Content="🏆 Achievements" 
+                    Height="40" 
+                    Background="#444" 
+                    Foreground="White" 
+                    FontSize="12" 
+                    FontWeight="Bold"
+                    Click="Achievements_Click"
+                    Cursor="Hand"
+                    Margin="0,0,0,10"/>
+
             <Button x:Name="AIAdvisorBtn" 
                     Content="🤖 Guild Advisor" 
                     Height="40" 
