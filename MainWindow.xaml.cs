@@ -12,7 +12,7 @@ namespace QuestTracker
         private Authenticator authenticator;
         private QuestManager questManager;
         private User currentUser;
-
+        private AchievementManager achievementManager;
         public MainWindow()
         {
             InitializeComponent();
@@ -24,9 +24,15 @@ namespace QuestTracker
             if (currentUser != null)
             {
                 questManager.SetCurrentUser(currentUser.UserID);
-                HeroNameDisplay.Text = $"Hjälte: {currentUser.Username}";
+                achievementManager = new AchievementManager(questManager, currentUser.UserID);
+
+                string rank = achievementManager.GetCurrentRank();
+                HeroNameDisplay.Text = $"Hjälte: {currentUser.Username}\n{rank}";
+
+                //NotificationService notificationService = new NotificationService();
+                //notificationService.CheckAndNotifyDeadlines(currentUser, questManager);
             }
-        }
+        }   
 
         private void AddQuest_Click(object sender, RoutedEventArgs e)
         {

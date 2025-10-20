@@ -80,6 +80,22 @@ namespace QuestTracker.Services
             return SendSMS(phoneNumber, message);
         }
 
+        //public async void CheckAndNotifyDeadlines(User user, QuestManager questManager)
+        //{
+        //    try
+        //    {
+        //        var nearDeadlineQuests = questManager.GetQuestsNearDeadline();
+
+        //        foreach (var quest in nearDeadlineQuests)
+        //        {
+        //            await SendEmailNotification(user, quest);  // Ändra till rätt metodnamn
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        // Fel
+        //    }
+        //}
         // Skicka completion-meddelande
         public bool SendCompletionNotification(string phoneNumber, string userName, string questTitle)
         {
